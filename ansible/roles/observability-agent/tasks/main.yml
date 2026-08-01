@@ -1,0 +1,33 @@
+- ansible.builtin.file:
+    path: /opt/promtail
+    state: directory
+    mode: "0755"
+
+- ansible.builtin.template:
+    src: config.yml.j2
+    dest: /opt/promtail/config.yml
+    mode: "0644"
+  notify: Restart promtail
+
+- community.docker.docker_container:
+    name: node-exporter
+    image: quay.io/prometheus/node-exporter:v{{ node_exporter_version }}
+    network_mode: host
+    pid_mode: host
+    restart_policy: unless-stopped
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - /:/host:ro,rslave
+
+- community.docker.docker_container:
+    name: promtail
+    image: grafana/promtail:{{ promtail_version }}
+    network_mode: host
+    restart_policy: unless-stopped
+    command:
+      - "-config.file=/etc/promtail/config.yml"
+    volumes:
+      - /opt/promtail/config.yml:/etc/promtail/config.yml:ro
+      - /opt/promtail:/positions
+      - /var/log:/var/log:ro
