@@ -1,0 +1,7 @@
+aws_region         = "eu-central-1"
+aws_profile        = "exam-devops"
+project            = "exam-devops"
+key_name           = "exam-devops"
+instance_type      = "t3.micro"
+operator_cidrs     = ["203.0.113.10/32"]
+jenkins_cidrs      = ["203.0.113.20/32"]
