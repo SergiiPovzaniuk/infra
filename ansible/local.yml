@@ -1,0 +1,43 @@
+- name: Bootstrap local management hosts
+  hosts: local
+  roles:
+    - ssh-access
+    - common
+    - tailscale
+
+- name: Install Jenkins controller
+  hosts: jenkins_local
+  roles:
+    - jenkins
+
+- name: Install MinIO and create tfstate bucket
+  hosts: minio
+  roles:
+    - minio-server
+    - minio
+
+- name: Remove monitoring stack from non-monitoring hosts
+  hosts: jenkins_local
+  tasks:
+    - name: Stop legacy monitoring compose on Jenkins host
+      community.docker.docker_compose_v2:
+        project_src: /opt/monitoring
+        state: absent
+      failed_when: false
+
+    - name: Remove legacy monitoring directory on Jenkins host
+      ansible.builtin.file:
+        path: /opt/monitoring
+        state: absent
+      failed_when: false
+
+- name: Install monitoring stack on Raspberry Pi
+  hosts: monitoring
+  roles:
+    - role: monitoring
+      when: enable_monitoring_stack | bool
+
+- name: Install observability agents on local hosts
+  hosts: local
+  roles:
+    - observability-agent

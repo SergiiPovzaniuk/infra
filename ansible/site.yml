@@ -1,0 +1,40 @@
+- hosts: all
+  roles:
+    - common
+    - tailscale
+
+- hosts: minio
+  roles:
+    - minio-server
+    - minio
+
+- hosts: jenkins_local
+  roles:
+    - jenkins
+  tasks:
+    - name: Stop legacy monitoring compose on Jenkins host
+      community.docker.docker_compose_v2:
+        project_src: /opt/monitoring
+        state: absent
+      failed_when: false
+
+- hosts: k3s_server
+  roles:
+    - k3s-server
+
+- hosts: k3s_agents
+  roles:
+    - k3s-agent
+
+- hosts: monitoring
+  roles:
+    - monitoring
+
+- hosts: all
+  roles:
+    - observability-agent
+
+- hosts: jenkins_agents
+  roles:
+    - role: jenkins-agent
+      when: enable_jenkins_agent | bool

@@ -1,0 +1,45 @@
+- ansible.builtin.debug:
+    msg: "Skipping Tailscale — set enable_tailscale=true and a real tailscale_auth_key"
+  when: not (enable_tailscale | bool) or (tailscale_auth_key | regex_search('replace-me'))
+
+- when: (enable_tailscale | bool) and not (tailscale_auth_key | regex_search('replace-me'))
+  block:
+    - ansible.builtin.apt:
+        name: gnupg
+        state: present
+        update_cache: true
+
+    - ansible.builtin.get_url:
+        url: "https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/{{ ansible_distribution_release }}.noarmor.gpg"
+        dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+        mode: "0644"
+
+    - ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
+        filename: tailscale
+
+    - ansible.builtin.apt:
+        name: tailscale
+        state: present
+        update_cache: true
+
+    - ansible.builtin.command: tailscale ip -4
+      register: tailscale_ip_result
+      changed_when: false
+      failed_when: false
+
+    - ansible.builtin.command:
+        cmd: "tailscale up --auth-key={{ tailscale_auth_key }} --ssh"
+      no_log: true
+      when: tailscale_ip_result.rc != 0
+
+    - ansible.builtin.command: tailscale ip -4
+      register: tailscale_ip_result
+      changed_when: false
+
+    - ansible.builtin.set_fact:
+        tailscale_ip: "{{ tailscale_ip_result.stdout }}"
+
+- ansible.builtin.set_fact:
+    tailscale_ip: "{{ ansible_host }}"
+  when: tailscale_ip is not defined

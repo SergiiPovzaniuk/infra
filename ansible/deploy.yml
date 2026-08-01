@@ -1,0 +1,14 @@
+- hosts: k3s_server
+  vars:
+    app_image: "{{ required_app_image }}"
+  tasks:
+    - ansible.builtin.template:
+        src: ../k8s/app.yaml.j2
+        dest: /tmp/exam-app.yaml
+        mode: "0600"
+
+    - ansible.builtin.command: kubectl apply -f /tmp/exam-app.yaml
+      changed_when: true
+
+    - ansible.builtin.command: kubectl -n exam-app rollout status statefulset/exam-app --timeout=180s
+      changed_when: false

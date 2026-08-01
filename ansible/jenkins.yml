@@ -1,0 +1,6 @@
+- name: Install Jenkins controller
+  hosts: jenkins_local
+  gather_subset:
+    - "!hardware"
+  roles:
+    - jenkins
