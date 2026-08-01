@@ -1,0 +1,25 @@
+- ansible.builtin.shell: >-
+    curl -sfL https://get.k3s.io |
+    INSTALL_K3S_EXEC="server --write-kubeconfig-mode 640 --tls-san {{ ansible_host }}"
+    sh -
+  args:
+    creates: /usr/local/bin/k3s
+
+- ansible.builtin.command: kubectl get nodes
+  changed_when: false
+  register: k3s_nodes
+  retries: 10
+  delay: 6
+  until: k3s_nodes.rc == 0
+
+- ansible.builtin.template:
+    src: traefik-config.yaml.j2
+    dest: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+    mode: "0600"
+
+- ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/node-token
+  register: k3s_token_file
+
+- ansible.builtin.set_fact:
+    k3s_token: "{{ k3s_token_file.content | b64decode | trim }}"
