@@ -3,32 +3,41 @@
     state: directory
     mode: "0755"
 
+- ansible.builtin.template:
+    src: Dockerfile.j2
+    dest: /opt/jenkins/Dockerfile
+    mode: "0644"
+  register: jenkins_dockerfile
+
 - ansible.builtin.copy:
     src: "{{ item }}"
     dest: "/opt/jenkins/{{ item | basename }}"
     mode: "0644"
   loop:
-    - "{{ playbook_dir }}/../jenkins/Dockerfile"
     - "{{ playbook_dir }}/../jenkins/plugins.txt"
     - "{{ playbook_dir }}/../jenkins/casc.yaml"
     - "{{ playbook_dir }}/../jenkins/docker-compose.yml"
+  register: jenkins_files
 
 - ansible.builtin.template:
     src: env.j2
     dest: /opt/jenkins/.env
     mode: "0600"
   no_log: true
-  notify: Restart jenkins
+  register: jenkins_env
+
+- ansible.builtin.set_fact:
+    jenkins_rebuild: "{{ jenkins_dockerfile.changed or jenkins_files.changed }}"
 
 - ansible.builtin.command:
-    cmd: docker compose build
+    cmd: "docker compose build --pull{% if jenkins_rebuild %} --no-cache{% endif %}"
     chdir: /opt/jenkins
-  register: jenkins_build
-  changed_when: "'Successfully tagged' in jenkins_build.stdout or 'Built' in jenkins_build.stdout or jenkins_build.rc == 0"
+  changed_when: true
 
-- community.docker.docker_compose_v2:
-    project_src: /opt/jenkins
-    state: present
+- ansible.builtin.command:
+    cmd: "docker compose up -d --remove-orphans{% if jenkins_rebuild or jenkins_env.changed %} --force-recreate{% endif %}"
+    chdir: /opt/jenkins
+  changed_when: true
 
 - ansible.builtin.template:
     src: jenkins-compose.service.j2

@@ -10,3 +10,4 @@ ssh_disable_password_auth: false
 enable_tailscale: false
 enable_jenkins_agent: false
 enable_monitoring_stack: true
+jenkins_docker_image: jenkins/jenkins:2.568.1-jdk21
