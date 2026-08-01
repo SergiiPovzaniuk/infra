@@ -1,0 +1,43 @@
+- ansible.builtin.file:
+    path: /opt/jenkins
+    state: directory
+    mode: "0755"
+
+- ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/opt/jenkins/{{ item | basename }}"
+    mode: "0644"
+  loop:
+    - "{{ playbook_dir }}/../jenkins/Dockerfile"
+    - "{{ playbook_dir }}/../jenkins/plugins.txt"
+    - "{{ playbook_dir }}/../jenkins/casc.yaml"
+    - "{{ playbook_dir }}/../jenkins/docker-compose.yml"
+
+- ansible.builtin.template:
+    src: env.j2
+    dest: /opt/jenkins/.env
+    mode: "0600"
+  no_log: true
+  notify: Restart jenkins
+
+- ansible.builtin.command:
+    cmd: docker compose build
+    chdir: /opt/jenkins
+  register: jenkins_build
+  changed_when: "'Successfully tagged' in jenkins_build.stdout or 'Built' in jenkins_build.stdout or jenkins_build.rc == 0"
+
+- community.docker.docker_compose_v2:
+    project_src: /opt/jenkins
+    state: present
+
+- ansible.builtin.template:
+    src: jenkins-compose.service.j2
+    dest: /etc/systemd/system/jenkins-compose.service
+    mode: "0644"
+  notify: Reload jenkins systemd
+
+- ansible.builtin.systemd:
+    name: jenkins-compose
+    enabled: true
+    state: started
+    daemon_reload: true

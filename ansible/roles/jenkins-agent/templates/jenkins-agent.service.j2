@@ -1,0 +1,13 @@
+[Unit]
+Description=Jenkins inbound agent
+After=network-online.target
+
+[Service]
+User=jenkins
+WorkingDirectory=/home/jenkins
+ExecStart=/usr/bin/java -jar /opt/jenkins-agent.jar -url {{ jenkins_url }} -secret {{ jenkins_agent_secret }} -name {{ inventory_hostname }} -workDir /home/jenkins
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,47 @@
+jenkins:
+  systemMessage: "Hybrid DevOps exam platform"
+  numExecutors: 2
+  labelString: "built-in amd64 docker"
+  mode: NORMAL
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: ${JENKINS_ADMIN_ID}
+          password: ${JENKINS_ADMIN_PASSWORD}
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              id: dockerhub
+              username: ${DOCKERHUB_USERNAME}
+              password: ${DOCKERHUB_TOKEN}
+          - usernamePassword:
+              id: ses-smtp
+              username: ${SES_SMTP_USERNAME}
+              password: ${SES_SMTP_PASSWORD}
+unclassified:
+  location:
+    url: ${JENKINS_URL}
+    adminAddress: ${SES_FROM}
+  mailer:
+    smtpHost: ${SES_SMTP_HOST}
+    smtpPort: ${SES_SMTP_PORT}
+    useSsl: false
+    useTls: true
+    charset: UTF-8
+  email-ext:
+    mailAccount:
+      smtpHost: ${SES_SMTP_HOST}
+      smtpPort: ${SES_SMTP_PORT}
+      credentialsId: ses-smtp
+      useSsl: false
+      useTls: true
+    charset: UTF-8
+    defaultContentType: text/plain
+    defaultRecipients: ${SES_TO}
+    defaultReplyTo: ${SES_FROM}
