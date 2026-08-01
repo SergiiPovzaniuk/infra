@@ -1,0 +1,19 @@
+{
+  "title": "Infrastructure",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Reachable hosts",
+      "targets": [{"expr": "sum(up{job=\"node\"})"}],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU usage by host",
+      "targets": [{"expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)"}],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

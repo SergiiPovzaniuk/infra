@@ -1,0 +1,45 @@
+- ansible.builtin.file:
+    path: "/opt/monitoring/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - grafana/provisioning/datasources
+    - grafana/provisioning/dashboards
+    - grafana/dashboards
+    - prometheus
+    - alertmanager
+    - loki
+    - relay
+
+- ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/opt/monitoring/{{ item.dest }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop:
+    - { src: docker-compose.yml.j2, dest: docker-compose.yml }
+    - { src: prometheus.yml.j2, dest: prometheus/prometheus.yml }
+    - { src: alerts.yml, dest: prometheus/alerts.yml }
+    - { src: alertmanager.yml, dest: alertmanager/alertmanager.yml }
+    - { src: loki.yml, dest: loki/loki.yml }
+    - { src: datasource.yml, dest: grafana/provisioning/datasources/datasource.yml }
+    - { src: dashboards.yml, dest: grafana/provisioning/dashboards/dashboards.yml }
+    - { src: infrastructure.json, dest: grafana/dashboards/infrastructure.json }
+    - { src: relay.py, dest: relay/relay.py }
+    - { src: env.j2, dest: .env, mode: "0600" }
+  no_log: "{{ item.dest == '.env' }}"
+  notify: Restart monitoring
+
+- community.docker.docker_compose_v2:
+    project_src: /opt/monitoring
+    state: present
+
+- ansible.builtin.template:
+    src: monitoring-compose.service.j2
+    dest: /etc/systemd/system/monitoring-compose.service
+    mode: "0644"
+
+- ansible.builtin.systemd:
+    name: monitoring-compose
+    enabled: true
+    state: started
+    daemon_reload: true
