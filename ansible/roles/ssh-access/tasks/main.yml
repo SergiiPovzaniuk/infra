@@ -1,0 +1,5 @@
+- ansible.builtin.authorized_key:
+    user: "{{ ansible_user }}"
+    key: "{{ lookup('file', ssh_public_key_path) }}"
+    state: present
+    exclusive: false

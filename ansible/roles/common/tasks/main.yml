@@ -1,0 +1,129 @@
+- ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+    name:
+      - ca-certificates
+      - curl
+      - fail2ban
+      - git
+      - jq
+      - ufw
+      - unattended-upgrades
+      - docker.io
+      - python3-docker
+      - python3-requests
+    state: present
+
+- ansible.builtin.apt:
+    name: docker-compose-v2
+    state: present
+  register: compose_pkg
+  ignore_errors: true
+
+- ansible.builtin.apt:
+    name: docker-compose-plugin
+    state: present
+  register: compose_plugin
+  ignore_errors: true
+  when: compose_pkg is failed
+
+- ansible.builtin.file:
+    path: /usr/local/lib/docker/cli-plugins
+    state: directory
+    mode: "0755"
+  when: compose_pkg is failed and compose_plugin is failed
+
+- ansible.builtin.get_url:
+    url: "https://github.com/docker/compose/releases/download/v2.32.4/docker-compose-linux-{{ 'x86_64' if ansible_architecture == 'x86_64' else ('aarch64' if ansible_architecture == 'aarch64' else ansible_architecture) }}"
+    dest: /usr/local/lib/docker/cli-plugins/docker-compose
+    mode: "0755"
+  when: compose_pkg is failed and compose_plugin is failed
+
+- ansible.builtin.apt:
+    name: openjdk-17-jre-headless
+    state: present
+  register: java_pkg
+  ignore_errors: true
+
+- ansible.builtin.apt:
+    name: default-jre-headless
+    state: present
+  when: java_pkg is failed
+
+- ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^PermitRootLogin"
+    line: "PermitRootLogin no"
+    validate: "sshd -t -f %s"
+  notify: Restart ssh
+
+- ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^PasswordAuthentication"
+    line: "PasswordAuthentication {{ 'no' if ssh_disable_password_auth else 'yes' }}"
+    validate: "sshd -t -f %s"
+  notify: Restart ssh
+
+- community.general.ufw:
+    direction: incoming
+    policy: deny
+
+- community.general.ufw:
+    direction: outgoing
+    policy: allow
+
+- community.general.ufw:
+    rule: allow
+    name: OpenSSH
+
+- community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: ["80", "443"]
+  when: "'k3s_server' in group_names"
+
+- community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: ["6443", "10250"]
+  when: "'k3s' in group_names"
+
+- community.general.ufw:
+    rule: allow
+    port: "8472"
+    proto: udp
+  when: "'k3s' in group_names"
+
+- community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: ["8080", "9000", "9001"]
+  when: "'jenkins_local' in group_names or 'minio' in group_names"
+
+- community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: ["3000", "9090", "9093", "3100"]
+  when: "'monitoring' in group_names"
+
+- community.general.ufw:
+    state: enabled
+
+- ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true

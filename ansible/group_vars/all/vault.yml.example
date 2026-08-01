@@ -1,0 +1,13 @@
+minio_endpoint: "http://192.168.1.10:9000"
+minio_access_key: "replace-me"
+minio_secret_key: "replace-me"
+jenkins_url: "http://192.168.1.80:8080"
+jenkins_admin_id: "admin"
+jenkins_admin_password: "replace-me"
+# Optional: only if you re-enable a dedicated Jenkins agent host
+jenkins_agent_secret: "replace-me"
+jenkins_ssh_private_key: "replace-me"
+discord_webhook_url: "https://discord.com/api/webhooks/replace-me"
+duckdns_token: "replace-me"
+tailscale_auth_key: "tskey-auth-replace-me"
+grafana_admin_password: "replace-me"

@@ -1,0 +1,25 @@
+[jenkins_local]
+jenkins ansible_host=192.168.1.80 ansible_user=user
+
+[minio]
+jenkins
+
+[monitoring]
+raspberrypi ansible_host=192.168.1.70 ansible_user=admin
+
+[jenkins_agents]
+
+[k3s_server]
+app1 ansible_host=203.0.113.11 ansible_user=ubuntu
+
+[k3s_agents]
+app2 ansible_host=203.0.113.12 ansible_user=ubuntu
+app3 ansible_host=203.0.113.13 ansible_user=ubuntu
+
+[k3s:children]
+k3s_server
+k3s_agents
+
+[local:children]
+jenkins_local
+monitoring
