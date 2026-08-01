@@ -20,11 +20,16 @@ services:
       SES_SMTP_PASSWORD: ${SES_SMTP_PASSWORD}
       SES_FROM: ${SES_FROM}
       SES_TO: ${SES_TO}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - /var/jenkins_home:/var/jenkins_home
       - ./casc.yaml:/var/jenkins_home/casc.yaml:ro
+      - /opt/jenkins:/opt/jenkins
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker:ro
       - /usr/libexec/docker/cli-plugins:/usr/libexec/docker/cli-plugins:ro

@@ -1,19 +1,18 @@
 # Runbook
 
-## Bootstrap
+## Bootstrap (one-time host prep)
 
-1. Create an AWS IAM principal limited to EC2, VPC, EIP and read-only AMI discovery.
-2. Create an EC2 key pair and copy `terraform.tfvars.example` to `terraform.tfvars`.
-3. Copy `backend.hcl.example` to `backend.hcl`; use the MinIO URL on the Jenkins host.
-4. Export MinIO credentials as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
-5. Copy `vault.yml.example` to `vault.yml`, replace placeholders, then encrypt it:
+1. AWS IAM with EC2, VPC, EIP, ELB/NLB; EC2 key pair `exam-devops`.
+2. Copy key to Jenkins host: `/opt/jenkins/ssh/exam-devops.pem` (`chmod 600`).
+3. Fill `ansible/group_vars/all/vault.yml` (AWS, MinIO, Docker Hub, GitHub, SES).
+4. `make local` once (Jenkins + MinIO + CasC).
 
-```bash
-ansible-vault encrypt ansible/group_vars/all/vault.yml
-```
+## Deploy (Jenkins only)
 
-6. Copy `hosts.ini.example` to `hosts.ini` (Jenkins = CI/MinIO, Raspberry Pi = monitoring).
-7. Run `make local` for local hosts, then `make infra`, `make inventory`, `make configure`.
+1. Push `infra` and `app-forked` to GitHub.
+2. Run **`infra/main`** with `ACTION=apply`, `DEPLOY_APP=true`.
+   - Terraform (NLB + 3× EC2) → Ansible k3s → kubeconfig/ingress_ip → triggers **`app-forked/main`**.
+3. Tear down: **`infra/main`** with `ACTION=destroy`.
 
 ## Host map
 
@@ -22,9 +21,16 @@ ansible-vault encrypt ansible/group_vars/all/vault.yml
 | `192.168.1.80` | Jenkins `:8080`, MinIO `:9000/:9001`, node_exporter, promtail |
 | `192.168.1.70` | Grafana `:3000`, Prometheus `:9090`, Alertmanager `:9093`, Loki `:3100`, node_exporter, promtail |
 
-## DNS and TLS
+## Ingress (NLB EIP)
 
-Point the DuckDNS A record at `terraform -chdir=terraform/envs/prod output -raw app1_public_ip`. Set the same hostname in `app_domain`. Traefik requests a Let's Encrypt certificate after DNS propagation.
+Terraform creates a Network Load Balancer with one Elastic IP in front of all three k3s nodes (ports 80/443 → Traefik). No DuckDNS/ACME.
+
+```bash
+terraform -chdir=terraform/envs/prod output -raw lb_public_ip
+./scripts/sync-jenkins-ingress.sh   # writes /opt/jenkins/ingress_ip for Jenkins CD
+```
+
+Reach the app at `http://<lb_public_ip>/`. Jenkins Deploy curls that IP after rollout.
 
 ## Jenkins
 

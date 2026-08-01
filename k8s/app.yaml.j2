@@ -71,13 +71,10 @@ kind: Ingress
 metadata:
   name: exam-app
   namespace: exam-app
-  annotations:
-    traefik.ingress.kubernetes.io/router.tls.certresolver: le
 spec:
   ingressClassName: traefik
   rules:
-    - host: {{ app_domain }}
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix
@@ -86,6 +83,3 @@ spec:
                 name: exam-app
                 port:
                   number: 80
-  tls:
-    - hosts: [{{ app_domain }}]
-      secretName: exam-app-tls

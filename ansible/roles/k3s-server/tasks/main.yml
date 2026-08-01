@@ -1,9 +1,9 @@
 - ansible.builtin.shell: >-
     curl -sfL https://get.k3s.io |
-    INSTALL_K3S_EXEC="server --write-kubeconfig-mode 640 --tls-san {{ ansible_host }}"
+    INSTALL_K3S_EXEC="server --write-kubeconfig-mode 640 --tls-san {{ ansible_host }} --tls-san {{ ansible_default_ipv4.address }}"
     sh -
-  args:
-    creates: /usr/local/bin/k3s
+  register: k3s_install
+  changed_when: "'No change detected' not in k3s_install.stdout"
 
 - ansible.builtin.command: kubectl get nodes
   changed_when: false
@@ -23,3 +23,29 @@
 
 - ansible.builtin.set_fact:
     k3s_token: "{{ k3s_token_file.content | b64decode | trim }}"
+  no_log: true
+
+- ansible.builtin.slurp:
+    src: /etc/rancher/k3s/k3s.yaml
+  register: k3s_kubeconfig_raw
+
+- ansible.builtin.copy:
+    dest: "{{ playbook_dir }}/../kubeconfig"
+    content: "{{ k3s_kubeconfig_raw.content | b64decode | replace('127.0.0.1', ansible_host) | replace('localhost', ansible_host) }}"
+    mode: "0600"
+  delegate_to: localhost
+  become: false
+  vars:
+    ansible_become: false
+    ansible_connection: local
+
+- ansible.builtin.copy:
+    dest: /opt/jenkins/kubeconfig
+    content: "{{ k3s_kubeconfig_raw.content | b64decode | replace('127.0.0.1', ansible_host) | replace('localhost', ansible_host) }}"
+    mode: "0644"
+  delegate_to: localhost
+  become: false
+  vars:
+    ansible_become: false
+    ansible_connection: local
+  when: lookup('env', 'JENKINS_PIPELINE') | default('') == '1'

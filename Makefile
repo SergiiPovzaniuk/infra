@@ -13,9 +13,11 @@ local:
 infra:
 	terraform -chdir=$(TF_DIR) init -backend-config=backend.hcl
 	terraform -chdir=$(TF_DIR) apply
+	./scripts/sync-jenkins-ingress.sh
 
 inventory:
 	./scripts/generate-inventory.sh
+	./scripts/sync-jenkins-ingress.sh
 
 configure:
 	ansible-galaxy collection install -r ansible/requirements.yml
@@ -23,7 +25,7 @@ configure:
 
 verify:
 	ansible k3s_server -i ansible/inventory/hosts.ini -m command -a "kubectl get nodes"
-	curl --fail https://$(APP_DOMAIN)/health
+	curl --fail http://$$(terraform -chdir=$(TF_DIR) output -raw lb_public_ip)/
 
 destroy:
 	terraform -chdir=$(TF_DIR) destroy

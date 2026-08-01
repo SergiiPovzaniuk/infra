@@ -12,7 +12,7 @@ The Raspberry Pi is not a Jenkins agent. CI uses Docker agents on the Jenkins co
 
 ## Three-node k3s
 
-`app1` runs the control plane and public Traefik ingress. `app2` and `app3` are workers. A StatefulSet has two replicas and one PVC per replica. The public security group attaches only to `app1`; all nodes share a private cluster security group.
+`app1` runs the control plane. `app2` and `app3` are workers. An NLB with a single Elastic IP forwards 80/443 to Traefik on every node. All app nodes share the k3s SG plus an edge SG for HTTP/HTTPS.
 
 ## Terraform and MinIO
 

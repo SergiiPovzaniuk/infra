@@ -31,8 +31,47 @@ credentials:
               id: github-pat
               username: ${GITHUB_USERNAME}
               password: ${GITHUB_PAT}
-              description: "GitHub PAT for app-forked multibranch"
+              description: "GitHub PAT for multibranch"
+          - usernamePassword:
+              id: aws
+              username: ${AWS_ACCESS_KEY_ID}
+              password: ${AWS_SECRET_ACCESS_KEY}
+              description: "AWS for Terraform"
+          - usernamePassword:
+              id: minio-tfstate
+              username: ${MINIO_ACCESS_KEY}
+              password: ${MINIO_SECRET_KEY}
+              description: "MinIO S3 backend for Terraform state"
 jobs:
+  - script: >
+      multibranchPipelineJob('infra') {
+        displayName('infra')
+        description('Terraform + Ansible k3s + NLB; triggers app-forked deploy')
+        branchSources {
+          git {
+            id('infra-git')
+            remote('https://github.com/SergiiPovzaniuk/infra.git')
+            credentialsId('github-pat')
+            includes('main')
+          }
+        }
+        factory {
+          workflowBranchProjectFactory {
+            scriptPath('Jenkinsfile')
+          }
+        }
+        orphanedItemStrategy {
+          discardOldItems {
+            daysToKeep(14)
+            numToKeep(20)
+          }
+        }
+        triggers {
+          periodicFolderTrigger {
+            interval('5m')
+          }
+        }
+      }
   - script: >
       multibranchPipelineJob('app-forked') {
         displayName('app-forked')

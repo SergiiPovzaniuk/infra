@@ -1,15 +1,17 @@
 - ansible.builtin.shell: >-
     curl -sfL https://get.k3s.io |
-    K3S_URL=https://{{ hostvars[groups['k3s_server'][0]].tailscale_ip }}:6443
+    K3S_URL=https://{{ hostvars[groups['k3s_server'][0]].ansible_default_ipv4.address }}:6443
     K3S_TOKEN={{ hostvars[groups['k3s_server'][0]].k3s_token }}
     sh -
   args:
-    creates: /usr/local/bin/k3s-agent
+    creates: /usr/local/bin/k3s
   no_log: true
+  async: 300
+  poll: 10
 
 - ansible.builtin.command: systemctl is-active k3s-agent
   changed_when: false
   register: k3s_agent_service
-  retries: 10
+  retries: 20
   delay: 6
   until: k3s_agent_service.stdout == "active"

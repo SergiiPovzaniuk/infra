@@ -3,7 +3,7 @@ admin_user: devops
 node_exporter_version: 1.8.2
 promtail_version: 3.3.2
 minio_bucket: tfstate
-app_domain: exam-devops.duckdns.org
+app_domain: "replace-me"
 acme_email: you@example.com
 ssh_public_key_path: /mnt/c/Users/sergi/.ssh/id_ed25519.pub
 ssh_disable_password_auth: false

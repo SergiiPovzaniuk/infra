@@ -1,7 +1,20 @@
 - ansible.builtin.file:
-    path: /opt/jenkins
+    path: "{{ item }}"
     state: directory
     mode: "0755"
+  loop:
+    - /opt/jenkins
+    - /opt/jenkins/ssh
+
+- ansible.builtin.file:
+    path: "{{ item }}"
+    state: touch
+    mode: "0644"
+    modification_time: preserve
+    access_time: preserve
+  loop:
+    - /opt/jenkins/ingress_ip
+    - /opt/jenkins/kubeconfig
 
 - ansible.builtin.template:
     src: Dockerfile.j2

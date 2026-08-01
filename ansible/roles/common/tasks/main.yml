@@ -91,20 +91,20 @@
     port: "{{ item }}"
     proto: tcp
   loop: ["80", "443"]
-  when: "'k3s_server' in group_names"
+  when: "group_names | intersect(['k3s_server', 'k3s_agents']) | length > 0"
 
 - community.general.ufw:
     rule: allow
     port: "{{ item }}"
     proto: tcp
   loop: ["6443", "10250"]
-  when: "'k3s' in group_names"
+  when: "group_names | intersect(['k3s_server', 'k3s_agents']) | length > 0"
 
 - community.general.ufw:
     rule: allow
     port: "8472"
     proto: udp
-  when: "'k3s' in group_names"
+  when: "group_names | intersect(['k3s_server', 'k3s_agents']) | length > 0"
 
 - community.general.ufw:
     rule: allow

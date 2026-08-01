@@ -12,7 +12,9 @@ ansible/group_vars/all/vault.yml
 ansible/.vault_pass
 jenkins/secrets/
 jenkins/.env
+terraform/envs/prod/backend.hcl
 kubeconfig
+ingress_ip
 ssh/config
 __pycache__/
 *.pyc

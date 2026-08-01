@@ -14,6 +14,7 @@ inventory="$root/ansible/inventory/hosts.ini"
 app1="$(terraform -chdir="$tf" output -raw app1_public_ip)"
 app2="$(terraform -chdir="$tf" output -raw app2_public_ip)"
 app3="$(terraform -chdir="$tf" output -raw app3_public_ip)"
+lb="$(terraform -chdir="$tf" output -raw lb_public_ip)"
 
 cat > "$inventory" <<EOF
 [jenkins_local]
@@ -45,4 +46,8 @@ monitoring
 [all:vars]
 ansible_ssh_private_key_file=$SSH_KEY_PATH
 ansible_python_interpreter=/usr/bin/python3
+app_domain=$lb
 EOF
+
+echo "$lb" > "$root/ingress_ip"
+echo "lb_public_ip=$lb"
