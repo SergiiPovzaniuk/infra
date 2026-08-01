@@ -1,0 +1,25 @@
+- ansible.builtin.assert:
+    that:
+      - minio_endpoint is defined
+      - minio_access_key is defined
+      - minio_secret_key is defined
+    fail_msg: "Create group_vars/all/vault.yml from vault.yml.example and encrypt it."
+
+- ansible.builtin.wait_for:
+    host: "{{ ansible_host }}"
+    port: 9000
+    delay: 3
+    timeout: 60
+
+- ansible.builtin.command:
+    argv:
+      - docker
+      - run
+      - --rm
+      - -e
+      - "MC_HOST_minio={{ minio_endpoint | regex_replace('^(https?://)', '\\1' ~ minio_access_key ~ ':' ~ minio_secret_key ~ '@') }}"
+      - minio/mc
+      - mb
+      - --ignore-existing
+      - "minio/{{ minio_bucket }}"
+  changed_when: false

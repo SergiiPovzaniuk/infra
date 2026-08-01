@@ -1,0 +1,9 @@
+configuration-as-code
+credentials-binding
+docker-workflow
+email-ext
+git
+github
+mailer
+pipeline-stage-view
+workflow-aggregator

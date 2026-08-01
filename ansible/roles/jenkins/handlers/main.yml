@@ -1,0 +1,8 @@
+- name: Restart jenkins
+  community.docker.docker_compose_v2:
+    project_src: /opt/jenkins
+    state: restarted
+
+- name: Reload jenkins systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
