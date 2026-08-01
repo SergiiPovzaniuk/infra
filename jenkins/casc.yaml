@@ -1,5 +1,5 @@
 jenkins:
-  systemMessage: "Hybrid DevOps exam platform"
+  systemMessage: "Hybrid DevOps exam platform — Git Flow CI/CD"
   numExecutors: 2
   labelString: "built-in amd64 docker"
   mode: NORMAL
@@ -12,6 +12,9 @@ jenkins:
   authorizationStrategy:
     loggedInUsersCanDoAnything:
       allowAnonymousRead: false
+security:
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false
 credentials:
   system:
     domainCredentials:
@@ -24,6 +27,41 @@ credentials:
               id: ses-smtp
               username: ${SES_SMTP_USERNAME}
               password: ${SES_SMTP_PASSWORD}
+          - usernamePassword:
+              id: github-pat
+              username: ${GITHUB_USERNAME}
+              password: ${GITHUB_PAT}
+              description: "GitHub PAT for app-forked multibranch"
+jobs:
+  - script: >
+      multibranchPipelineJob('app-forked') {
+        displayName('app-forked')
+        description('Git Flow CI/CD: main develop feature/* release/* hotfix/*')
+        branchSources {
+          git {
+            id('app-forked-git')
+            remote('https://github.com/SergiiPovzaniuk/app-forked.git')
+            credentialsId('github-pat')
+            includes('main develop feature/* release/* hotfix/*')
+          }
+        }
+        factory {
+          workflowBranchProjectFactory {
+            scriptPath('Jenkinsfile')
+          }
+        }
+        orphanedItemStrategy {
+          discardOldItems {
+            daysToKeep(14)
+            numToKeep(20)
+          }
+        }
+        triggers {
+          periodicFolderTrigger {
+            interval('5m')
+          }
+        }
+      }
 unclassified:
   location:
     url: ${JENKINS_URL}
