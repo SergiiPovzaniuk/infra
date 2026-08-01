@@ -1,0 +1,30 @@
+Host jenkins
+  HostName 192.168.1.80
+  User user
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  StrictHostKeyChecking accept-new
+
+# Raspberry Pi = monitoring host (Prometheus/Grafana/Loki), not a Jenkins agent
+Host rpi
+  HostName 192.168.1.70
+  User admin
+  IdentityFile ~/.ssh/id_ed25519
+  IdentitiesOnly yes
+  StrictHostKeyChecking accept-new
+
+
+Host k3s-server
+  HostName REPLACE_AFTER_TERRAFORM_APPLY
+
+Host k3s-worker-1
+  HostName REPLACE_AFTER_TERRAFORM_APPLY
+
+Host k3s-worker-2
+  HostName REPLACE_AFTER_TERRAFORM_APPLY
+
+Host k3s-*
+  User ubuntu
+  IdentityFile ~/.ssh/exam-devops.pem
+  IdentitiesOnly yes
+  StrictHostKeyChecking accept-new
