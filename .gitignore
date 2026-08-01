@@ -28,3 +28,6 @@ scripts/recover_jenkins.py
 scripts/validate_roles.py
 scripts/verify_jenkins_autostart.py
 scripts/via_pi_to_jenkins.py
+scripts/upgrade_jenkins_remote.py
+scripts/run_jenkins_upgrade.sh
+scripts/check_jenkins_version.sh
